@@ -12,7 +12,7 @@ setup(
     py_modules=["memrepl"],
     install_requires=[
         "frida",
-        "ipython",
+        "ipython<6.0", # iPython 6 needs python 3.
         "hexdump"
     ],
     entry_points="""

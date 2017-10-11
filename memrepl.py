@@ -327,12 +327,6 @@ class MemoryGrip:
 memory_grip = None
 
 
-def memory_dump(ranges, filename):
-    """
-    """
-    pass
-
-
 def memory_list(protection="---"):
     """
 
@@ -430,9 +424,9 @@ def memory_write(value_format, address, value):
     memory_grip.memory_write(address, value)
 
 
-def memory_search_pointer(address, protection):
+def memory_search_pointer(start_address, protection):
     """
-    Start a search from `address` looking for pointers to segments with
+    Start a search from `start_address` looking for pointers to segments with
     `permission`. The search will stop at the end of the segment.
 
     Searching for function pointers:
@@ -460,8 +454,8 @@ def memory_search_pointer(address, protection):
     # Get all the segments.
     segments = memory_grip.memory_list("")
 
-    # Find the segment that contains `address`.
-    selected_segment = get_segment(segments, address)
+    # Find the segment that contains `start_address`.
+    selected_segment = get_segment(segments, start_address)
     if not selected_segment:
         print "No valid segment was found."
         return
@@ -488,6 +482,9 @@ def memory_search_pointer(address, protection):
             ret.append((address, pointer, segment))
 
     for address, pointer, segment in ret:
+        if address < start_address:
+            continue
+
         print "Found pointer @ 0x%.16x = 0x%.16x to segment 0x%.16x - 0x%.16x %3s %s" % (
             address, pointer, segment["start"], segment["end"], segment["protection"], segment["filename"]
         )
