@@ -4,12 +4,12 @@ import sys
 import glob
 import frida
 import struct
+import hexdump
 import IPython
 import fnmatch
 import binascii
 import argparse
-
-from hexdump import hexdump
+import collections
 
 parser = argparse.ArgumentParser(description="Memory Grip.")
 
@@ -179,7 +179,7 @@ def format_value(format, value):
 
 def format_string(data, format):
     if format == "hex":
-        return hexdump(data)
+        return hexdump.hexdump(data, result="return")
 
     elif format == "u8":
         format = "B"
@@ -380,16 +380,35 @@ def memory_search(value_format, value, out_format="hex", out_size=32):
     # Calculate the number of bytes we need to represent the output.
     size = format_size(out_format, out_size)
 
+    # Collect results offsets.
+    results_offsets = []
+
     # For each `result`, dump with the given format.
-    for result in results:
+    for i, result in enumerate(results):
+        try:
+            next_result_offset = results[i + 1] - result
+            results_offsets.append(next_result_offset)
+
+        except IndexError:
+            next_result_offset = 0
+
         # Read `size` bytes from `result` address.
         data = memory_grip.memory_read(result, size)
-        print "Found @ 0x%.16x:\n%s" % (result, format_string(data, out_format))
+        print "Address=0x%.16x next_result_offset=0x%.8x" % (result, next_result_offset)
+        print format_string(data, out_format)
+        print
 
     print "Got %u results." % len(results)
 
+    print "More common results deltas:"
+    for offset, count in collections.Counter(results_offsets).most_common(8):
+        if count <= 1:
+            break
 
-def memory_read(value_format, address, size=32):
+        print "  offset=0x%.8x count=%u" % (offset, count)
+
+
+def memory_read(value_format, address, size=32, count=1):
     """
     Examples:
     memory_read("u8", 0xcafecafe)
@@ -404,11 +423,13 @@ def memory_read(value_format, address, size=32):
 
     # Calculate the size of the read based on the format string.
     size = format_size(value_format, size)
-    data = memory_grip.memory_read(address, size)
-    print "Read @ 0x%.16x:\n%s" % (address, format_string(data, value_format))
+    for i in xrange(0, count):
+        caddr = address + (i * size)
+        data = memory_grip.memory_read(caddr, size)
+        print "Read @ 0x%.16x:\n%s" % (caddr, format_string(data, value_format))
 
 
-def memory_write(value_format, address, value):
+def memory_write(value_format, address, value, count=1):
     """
     Examples:
     memory_write("u8", 0xdeadbeef, 0xca)
@@ -421,7 +442,10 @@ def memory_write(value_format, address, value):
     global memory_grip
 
     value = format_value(value_format, value)
-    memory_grip.memory_write(address, value)
+    size = len(value)
+    for i in xrange(0, count):
+        caddr = address + (i * size)
+        memory_grip.memory_write(caddr, value)
 
 
 def memory_search_pointer(start_address, protection):
