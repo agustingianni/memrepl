@@ -7,6 +7,7 @@ import struct
 import hexdump
 import IPython
 import fnmatch
+import logging
 import binascii
 import argparse
 import collections
