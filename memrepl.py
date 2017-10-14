@@ -1,7 +1,6 @@
 import sys
 import struct
 import fnmatch
-import logging
 import binascii
 import argparse
 import collections
@@ -55,7 +54,7 @@ if args.device == "list":
 if args.device:
     devs = [dev.id for dev in frida.enumerate_devices()]
     if args.device not in devs:
-        logging.error("Invalid device id `%s`." % args.device)
+        print "Invalid device id `%s`." % args.device
         sys.exit(-1)
 
     # Get the device.
@@ -91,7 +90,7 @@ elif args.proc_name:
 
     # Process name does not match any running processes.
     if len(processes) == 0:
-        logging.error("Invalid process name `%s`." % args.proc_name)
+        print "Invalid process name `%s`." % args.proc_name
         sys.exit(-1)
 
     # More than one process is available.
@@ -125,7 +124,7 @@ elif args.proc_name:
         target_process = proc.pid
 
 else:
-    logging.error("I need either a PID or a process name.")
+    print "I need either a PID or a process name."
     parser.print_usage()
     sys.exit(-1)
 
