@@ -1,16 +1,14 @@
-import os
-import re
 import sys
-import glob
-import frida
 import struct
-import hexdump
-import IPython
 import fnmatch
 import logging
 import binascii
 import argparse
 import collections
+
+import frida
+import hexdump
+import IPython
 
 parser = argparse.ArgumentParser(description="Memory Grip.")
 
